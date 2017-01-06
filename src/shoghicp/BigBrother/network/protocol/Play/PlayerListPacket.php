@@ -29,7 +29,7 @@ class PlayerListPacket extends Packet{
 	public $players = [];
 
 	public function pid(){
-		return 0x2d;
+		return 0x38;
 	}
 
 	public function clean(){

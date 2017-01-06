@@ -30,14 +30,14 @@ class EntityTeleportPacket extends Packet{
 	public $onGround = true;
 
 	public function pid(){
-		return 0x49;
+		return 0x18;
 	}
 
 	public function encode(){
 		$this->putVarInt($this->eid);
-		$this->putDouble($this->x);
-		$this->putDouble($this->y);
-		$this->putDouble($this->z);
+		$this->putInt(intval($this->x * 32));
+		$this->putInt(intval($this->y * 32));
+		$this->putInt(intval($this->z * 32));
 		$this->putByte((int) ($this->yaw * (256 / 360)));
 		$this->putByte((int) ($this->pitch * (256 / 360)));
 		$this->putByte($this->onGround ? 1 : 0);

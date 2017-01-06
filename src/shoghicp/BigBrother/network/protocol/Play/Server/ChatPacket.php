@@ -25,7 +25,7 @@ class ChatPacket extends Packet{
 	public $position = 0; //0 = chat, 1 = system message, 2 = action bar
 
 	public function pid(){
-		return 0x0f;
+		return 0x02;
 	}
 
 	public function encode(){
@@ -34,6 +34,7 @@ class ChatPacket extends Packet{
 	}
 
 	public function decode(){
-
+		$this->message = $this->getString();
+		$this->position = $this->getByte();
 	}
 }

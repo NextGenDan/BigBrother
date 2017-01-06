@@ -28,7 +28,7 @@ class EntityVelocityPacket extends Packet{
 	public $velocityZ;
 
 	public function pid(){
-		return 0x3b;
+		return 0x12;
 	}
 
 	public function encode(){

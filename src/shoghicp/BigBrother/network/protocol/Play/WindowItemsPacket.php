@@ -26,7 +26,7 @@ class WindowItemsPacket extends Packet{
 	public $items = [];
 
 	public function pid(){
-		return 0x14;
+		return 0x30;
 	}
 
 	public function encode(){

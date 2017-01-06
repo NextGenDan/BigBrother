@@ -125,10 +125,11 @@ class DesktopPlayer extends Player{
 		$pk->chunkX = $x;
 		$pk->chunkZ = $z;
 		$pk->groundUp = true;
-		$pk->primaryBitmap = $chunk->getBitMapData();
-		$pk->payload = $chunk->getChunkData();
-		$pk->biomes = $chunk->getBiomesData();
-		$pk->blockEntities = [];//TODO
+		$pk->primaryBitmap = 0xff;
+		$pk->payload = $chunk->getData();
+
+		/*$pk->primaryBitmap = $chunk->getBitMapData();
+		$pk->payload = $chunk->getChunkData();*/
 		$this->putRawPacket($pk);
 
 		foreach($this->level->getChunkTiles($x, $z) as $tile){
@@ -179,6 +180,7 @@ class DesktopPlayer extends Player{
 			}
 
 			unset($this->loadQueue[$index]);
+			
 			$this->bigBrother_sendChunk($X, $Z);
 		}
 
@@ -242,7 +244,7 @@ class DesktopPlayer extends Player{
 
 			$this->handleDataPacket($pk);
 
-			/*$pk = new PlayerListPacket();
+			$pk = new PlayerListPacket();
 			$pk->actionID = PlayerListPacket::TYPE_ADD;
 			$pk->players[] = [
 				$this->bigBrother_uuid,
@@ -262,7 +264,7 @@ class DesktopPlayer extends Player{
 			$pk = new TitlePacket();
 			$pk->actionID = TitlePacket::TYPE_SET_SUB_TITLE;
 			$pk->data = TextFormat::toJSON(TextFormat::YELLOW . TextFormat::BOLD . "This is a beta version of BigBrother.");
-			$this->putRawPacket($pk);*/
+			$this->putRawPacket($pk);
 		}
 	}
 

@@ -32,7 +32,7 @@ class SpawnObjectPacket extends Packet{
 	public $data = "";
 
 	public function pid(){
-		return 0x00;
+		return 0x0e;
 	}
 
 	public function encode(){

@@ -86,8 +86,8 @@ use shoghicp\BigBrother\network\protocol\Play\OpenWindowPacket;
 use shoghicp\BigBrother\network\protocol\Play\PlayDisconnectPacket;
 use shoghicp\BigBrother\network\protocol\Play\Server\PlayerAbilitiesPacket;
 use shoghicp\BigBrother\network\protocol\Play\PlayerListPacket;
-use shoghicp\BigBrother\network\protocol\Play\PositionAndLookPacket;
-use shoghicp\BigBrother\network\protocol\Play\STabComletePacket;
+use shoghicp\BigBrother\network\protocol\Play\Server\PlayerPositionAndLookPacket;
+use shoghicp\BigBrother\network\protocol\Play\Server\TabComletePacket as STCTabComletePacket;
 use shoghicp\BigBrother\network\protocol\Play\ScoreboardObjectivePacket;
 use shoghicp\BigBrother\network\protocol\Play\ServerDifficultyPacket;
 use shoghicp\BigBrother\network\protocol\Play\SetSlotPacket;
@@ -96,8 +96,8 @@ use shoghicp\BigBrother\network\protocol\Play\SpawnPlayerPacket;
 use shoghicp\BigBrother\network\protocol\Play\SpawnPositionPacket;
 use shoghicp\BigBrother\network\protocol\Play\StatisticsPacket;
 use shoghicp\BigBrother\network\protocol\Play\RespawnPacket as CRespawnPacket;
-use shoghicp\BigBrother\network\protocol\Play\Server\ChatPacket;
-use shoghicp\BigBrother\network\protocol\Play\STCCloseWindowPacket;
+use shoghicp\BigBrother\network\protocol\Play\Server\ChatPacket as STCChatPacket;
+use shoghicp\BigBrother\network\protocol\Play\Server\CloseWindowPacket as STCCloseWindowPacket;
 use shoghicp\BigBrother\network\protocol\Play\TimeUpdatePacket;
 use shoghicp\BigBrother\network\protocol\Play\UpdateHealthPacket;
 use shoghicp\BigBrother\network\protocol\Play\UpdateSignPacket;
@@ -108,120 +108,23 @@ use shoghicp\BigBrother\utils\Binary;
 class Translator_100 implements Translator{
 
 	public function interfaceToServer(DesktopPlayer $player, Packet $packet){
+		//if($packet->pid() !== 0x00 and $packet->pid() !== 0x03 and $packet->pid() !== 0x04 and $packet->pid() !== 0x05 and $packet->pid() !== 0x06){
+			echo "[Receive] 0x".bin2hex(chr($packet->pid()))."\n"; //Debug
+		//}
 		switch($packet->pid()){
-			case 0x00: //TeleportConfirmPacket
-				//Confirm
+			case 0x00: //KeepAlivePacket
+				$pk->id = mt_rand();
+				$player->putRawPacket($pk);
 				return null;
 
-			case 0x02: //ChatPacket
+			case 0x01: //ChatPacket
 				$pk = new TextPacket();
 				$pk->type = 1;//Chat Type
 				$pk->source = "";
 				$pk->message = $packet->message;
 				return $pk;
 
-			case 0x03: //ClientStatusPacket
-				switch($packet->actionID){
-					case 0:
-						$pk = new PlayerActionPacket();
-						$pk->eid = 0;
-						$pk->action = PlayerActionPacket::ACTION_RESPAWN;
-						$pk->x = 0;
-						$pk->y = 0;
-						$pk->z = 0;
-						$pk->face = 0;
-						return $pk;
-					break;
-					case 1:
-						$statistic = [];
-						$statistic[] = ["achievement.openInventory", 1];//
-						foreach($player->achievements as $achievement => $count){
-							$statistic[] = ["achievement.".$achievement, $count];
-						}
-
-						//stat
-						//https://gist.github.com/thinkofdeath/a1842c21a0cf2e1fb5e0
-
-						$pk = new StatisticsPacket();
-						$pk->count = count($statistic);//TODO stat
-						$pk->statistic = $statistic;
-						$player->putRawPacket($pk);
-					break;
-					case 2:
-						//$player->awardAchievement("openInventory"); this for DesktopPlayer
-						//Achievement::broadcast($player, "openInventory");//Debug
-					break;
-				}
-				return null;
-
-			case 0x04: //ClientSettingsPacket
-				$player->setSetting([
-					"Lang" => $packet->lang,
-					"View" => $packet->view,
-					"ChatMode" => $packet->chatmode,
-					"ChatColor" => $packet->chatcolor,
-					"SkinSettings" => $packet->skinsetting,
-				]);
-
-				return null;
-
-			case 0x09: //PluginMessagePacket
-				switch($packet->channel){
-					case "REGISTER"://Mods Register
-						$player->setSetting(["Channels" => $packet->data]);
-					break;
-					case "MC|Brand": //ServerType
-						$player->setSetting(["ServerType" => $packet->data]);
-					break;
-					default:
-						echo "PluginChannel: ".$packet->channel."\n";
-					break;
-				}
-				return null;
-
-			case 0x0b: //KeepAlivePacket
-				$pk->id = mt_rand();
-				$player->putRawPacket($pk);
-
-				return null;
-
-			case 0x0c: //PlayerPositonPacket
-				$pk = new MovePlayerPacket();
-				$pk->x = $packet->x;
-				$pk->y = $packet->y + $player->getEyeHeight();
-				$pk->z = $packet->z;
-				$pk->yaw = $player->yaw;
-				$pk->bodyYaw = $player->yaw;
-				$pk->pitch = $player->pitch;
-				return $pk;
-
-			case 0x0d: //PlayerPositionAndLookPacket
-				$pk = new MovePlayerPacket();
-				$pk->x = $packet->x;
-				$pk->y = $packet->y + $player->getEyeHeight();
-				$pk->z = $packet->z;
-				$pk->yaw = $packet->yaw;
-				$pk->bodyYaw = $packet->yaw;
-				$pk->pitch = $packet->pitch;
-				return $pk;
-
-			case 0x0e: //PlayerLookPacket
-				$pk = new MovePlayerPacket();
-				$pk->x = $player->x;
-				$pk->y = $player->y + $player->getEyeHeight();
-				$pk->z = $player->z;
-				$pk->yaw = $packet->yaw;
-				$pk->bodyYaw = $packet->yaw;
-				$pk->pitch = $packet->pitch;
-				return $pk;
-
-			
-			case 0x12: //PlayerAbilitiesPacket
-				$player->setSetting(["isFlying" => $packet->isFlying]);
-				return null;
-			
-
-			/*case 0x02: //UseEntityPacket
+			case 0x02: //UseEntityPacket
 				$pk = new InteractPacket();
 				$pk->target = $packet->target;
 				$pk->action = $packet->type;
@@ -231,11 +134,35 @@ class Translator_100 implements Translator{
 				$player->setSetting(["onGround" => $packet->onGround]);
 				return null;
 
-			
+			case 0x04: //PlayerPositonPacket
+				$pk = new MovePlayerPacket();
+				$pk->x = $packet->x;
+				$pk->y = $packet->y + $player->getEyeHeight();
+				$pk->z = $packet->z;
+				$pk->yaw = $player->yaw;
+				$pk->bodyYaw = $player->yaw;
+				$pk->pitch = $player->pitch;
+				return $pk;
 
-			
+			case 0x05: //PlayerLookPacket
+				$pk = new MovePlayerPacket();
+				$pk->x = $player->x;
+				$pk->y = $player->y + $player->getEyeHeight();
+				$pk->z = $player->z;
+				$pk->yaw = $packet->yaw;
+				$pk->bodyYaw = $packet->yaw;
+				$pk->pitch = $packet->pitch;
+				return $pk;
 
-			
+			case 0x06: //PlayerPositionAndLookPacket
+				$pk = new MovePlayerPacket();
+				$pk->x = $packet->x;
+				$pk->y = $packet->y + $player->getEyeHeight();
+				$pk->z = $packet->z;
+				$pk->yaw = $packet->yaw;
+				$pk->bodyYaw = $packet->yaw;
+				$pk->pitch = $packet->pitch;
+				return $pk;
 
 			case 0x07: //PlayerDiggingPacket
 				switch($packet->status){
@@ -404,7 +331,7 @@ class Translator_100 implements Translator{
 					break;
 					/*case 6:
 
-					break;*//*
+					break;*/
 					default:
 						echo "[AnimatePacket] ".$packet->actionID."\n";//Debug Code
 					break;
@@ -433,11 +360,13 @@ class Translator_100 implements Translator{
 					$pk->slot = $packet->slot;
 					$pk->item = $packet->item;
 					return $pk;
-				}*//*
+				}*/
 
 				return null;
 
-			
+			case 0x13: //CPlayerAbilitiesPacket
+				$player->setSetting(["isFlying" => $packet->isFlying]);
+				return null;
 
 			case 0x14: //CTabCompletePacket
 				/*$pk = new STabComletePacket();
@@ -456,17 +385,74 @@ class Translator_100 implements Translator{
 
 				//echo $packet->text."\n";
 
-				return $pk;*//*
+				return $pk;*/
 				return null;
 
-			
+			case 0x15: //ClientSettingsPacket
+				$player->setSetting([
+					"Lang" => $packet->lang,
+					"View" => $packet->view,
+					"ChatMode" => $packet->chatmode,
+					"ChatColor" => $packet->chatcolor,
+					"SkinSettings" => $packet->skinsetting,
+				]);
+
+				return null;
+
+			case 0x16: //ClientStatusPacket
+				switch($packet->actionID){
+					case 0:
+						$pk = new PlayerActionPacket();
+						$pk->eid = 0;
+						$pk->action = PlayerActionPacket::ACTION_RESPAWN;
+						$pk->x = 0;
+						$pk->y = 0;
+						$pk->z = 0;
+						$pk->face = 0;
+						return $pk;
+					break;
+					case 1:
+						$statistic = [];
+						$statistic[] = ["achievement.openInventory", 1];//
+						foreach($player->achievements as $achievement => $count){
+							$statistic[] = ["achievement.".$achievement, $count];
+						}
+
+						//stat
+						//https://gist.github.com/thinkofdeath/a1842c21a0cf2e1fb5e0
+
+						$pk = new StatisticsPacket();
+						$pk->count = count($statistic);//TODO stat
+						$pk->statistic = $statistic;
+						$player->putRawPacket($pk);
+					break;
+					case 2:
+						//$player->awardAchievement("openInventory"); this for DesktopPlayer
+						//Achievement::broadcast($player, "openInventory");//Debug
+					break;
+				}
+				return null;
+
+			case 0x17: //PluginMessagePacket
+				switch($packet->channel){
+					case "REGISTER"://Mods Register
+						$player->setSetting(["Channels" => $packet->data]);
+					break;
+					case "MC|Brand": //ServerType
+						$player->setSetting(["ServerType" => $packet->data]);
+					break;
+					default:
+						echo "PluginChannel: ".$packet->channel."\n";
+					break;
+				}
+				return null;
 
 			case 0x19: //ResourcePackStatusPacket
 				$player->setSetting(["ResourceStatus" => $packet->status, "ResourceHash" => $packet->hash]);
-				return null;*/
+				return null;
 
 			default:
-				echo "[Translator][Receive] 0x".bin2hex(chr($packet->pid()))."\n";
+				echo "[Receive] 0x".bin2hex(chr($packet->pid()))."\n";
 				return null;
 		}
 	}
@@ -485,8 +471,6 @@ class Translator_100 implements Translator{
 
 			case Info::TEXT_PACKET:
 
-				//echo $player->getSetting("Lang")."\n";
-
 				if($packet->message === "chat.type.achievement"){
 					/*$pk = new ScoreboardObjectivePacket();
 					$pk->ObjectiveName = $packet->parameters[0];
@@ -496,12 +480,12 @@ class Translator_100 implements Translator{
 					/*echo "TextPacket: achievement\n";*/
 					return null;
 				}else{
-					$pk = new ChatPacket();
+					$pk = new STCChatPacket();
 					$pk->message = BigBrother::toJSON($packet->message, $packet->type, $packet->parameters);
-					$pk->position = 0;
 				}
 
-				return $pk;
+				//return $pk;
+				return null;
 
 			case Info::SET_TIME_PACKET:
 				$pk = new TimeUpdatePacket();
@@ -512,6 +496,8 @@ class Translator_100 implements Translator{
 			case Info::START_GAME_PACKET:
 				$packets = [];
 
+				echo "a\n";
+
 				$pk = new JoinGamePacket();
 				$pk->eid = $packet->entityUniqueId;
 				$pk->gamemode = $packet->gamemode;
@@ -521,11 +507,15 @@ class Translator_100 implements Translator{
 				$pk->levelType = "default";
 				$packets[] = $pk;
 
+				echo "b\n";
+
 				$pk = new SpawnPositionPacket();
 				$pk->spawnX = $packet->spawnX;
 				$pk->spawnY = $packet->spawnY;
 				$pk->spawnZ = $packet->spawnZ;
 				$packets[] = $pk;
+
+				echo "c\n";
 
 				$pk = new PlayerAbilitiesPacket();
 				$pk->flyingSpeed = 0.05;
@@ -536,14 +526,17 @@ class Translator_100 implements Translator{
 				$pk->isCreative = ($player->getGamemode() & 0x01) > 0;
 				$packets[] = $pk;
 
-				$pk = new PositionAndLookPacket();
+				echo "d\n";
+
+				$pk = new PlayerPositionAndLookPacket();
 				$pk->x = $packet->x;
 				$pk->y = $packet->y;
 				$pk->z = $packet->z;
 				$pk->yaw = $player->yaw;
 				$pk->pitch = $player->pitch;
-				$pk->teleportId = 0;
 				$packets[] = $pk;
+
+				echo "e\n";
 
 				return $packets;
 
@@ -641,7 +634,6 @@ class Translator_100 implements Translator{
 
 			case Info::MOVE_ENTITY_PACKET:
 				$packets = [];
-
 				$pk = new EntityTeleportPacket();
 				$pk->eid = $packet->eid;
 				$pk->x = $packet->x;
@@ -655,11 +647,12 @@ class Translator_100 implements Translator{
 				$pk->eid = $packet->eid;
 				$pk->yaw = $packet->yaw;
 				$packets[] = $pk;
+
 				return $packets;
 
 			case Info::MOVE_PLAYER_PACKET:
 				if($packet->eid === 0){
-					$pk = new PositionAndLookPacket();
+					$pk = new PlayerPositionAndLookPacket();
 					$pk->x = $packet->x;
 					$pk->y = $packet->y - $player->getEyeHeight();
 					$pk->z = $packet->z;
@@ -715,7 +708,7 @@ class Translator_100 implements Translator{
 
 				return $packets;
 
-			/*case Info::SET_ENTITY_DATA_PACKET:
+			case Info::SET_ENTITY_DATA_PACKET:
 				/*if(isset($packet->metadata[16])){
 					if($packet->metadata[16][1] === 2){
 						$pk = new UseBedPacket(); //Bug
@@ -733,20 +726,21 @@ class Translator_100 implements Translator{
 					return $pk;
 				}elseif(isset($packet->metadata[17])){
 					$player->setSetting(["BedXYZ" => $packet->metadata[17][1]]);
-				}*//*
+				}*/
 
-				$pk = new EntityMetadataPacket();
+				/*$pk = new EntityMetadataPacket();
 				$pk->eid = $packet->eid;
 				$pk->metadata = $packet->metadata;
-				return $pk;
+				return $pk;*/
+				return null;
 
-			/*case Info::SET_ENTITY_MOTION_PACKET:
+			case Info::SET_ENTITY_MOTION_PACKET:
 				$pk = new EntityVelocityPacket();
 				$pk->eid = $packet->eid;
 				$pk->velocityX = $packet->motionX;
 				$pk->velocityY = $packet->motionY;
 				$pk->velocityZ = $packet->motionZ;
-				return $pk;*/
+				return $pk;
 
 			case Info::SET_HEALTH_PACKET:
 				$pk = new UpdateHealthPacket();

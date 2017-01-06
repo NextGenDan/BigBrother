@@ -24,7 +24,7 @@ class TabCompletePacket extends Packet{
 	public $matches = [];
 
 	public function pid(){
-		return 0x0e;
+		return 0x3a;
 	}
 
 	public function encode(){

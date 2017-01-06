@@ -4,107 +4,85 @@ namespace shoghicp\BigBrother;
 
 use pocketmine\Player;
 use pocketmine\level\Level;
-use shoghicp\BigBrother\utils\Binary;
 
 class DesktopChunk{
-	private $player, $chunkX, $chunkZ, $provider, $groundup, $bitmap, $biomes;
+	private $player, $chunkX, $chunkZ, $provider;
 
 	public function __construct(Player $player, $chunkX, $chunkZ){
 		$this->player = $player;
 		$this->chunkX = $chunkX;
 		$this->chunkZ = $chunkZ;
-		$this->provider = $player->getLevel()->getProvider();
-		$this->groundup = true;
-		$this->bitmap = 0;
-		$this->biomes = null;
+		$this->provider = $provider = $player->getLevel()->getProvider();
 		$this->data = $this->generateChunk();
 	}
 
 	public function generateChunk(){
 		$chunk = $this->provider->getChunk($this->chunkX, $this->chunkZ, false);
-		$this->biomes = $chunk->getBiomeIdArray();
+		$chunkblockIds = $chunk->getBlockIdArray();
+		$chunkblockData = $chunk->getBlockDataArray();
+		$chunkblockSkyLight = $chunk->getBlockSkyLightArray();
+		$chunkblockLight = $chunk->getBlockLightArray();
 
-		$payload = "";
+		$chunkbiomeIds = $chunk->getBiomeIdArray();
 
-		$subChunkCount = $chunk->getSubChunkSendCount();
-		foreach($chunk->getSubChunks() as $num => $subChunk){
-			if($subChunk->isEmpty()){
-				continue;
-			}
+		$ids = ["", "", "", "", "", "", "", ""];
+		$blockLight = $skyLight = [[], [], [], [], [], [], [], []];
 
-			$this->bitmap |= 0x01 << $num;
+		//Complexity: O(MG)
+		for($Y = 0; $Y < 8; ++$Y){
+			for($y = 0; $y < 16; ++$y){
+				$offset = ($Y << 4) + $y;
+				for($z = 0; $z < 16; ++$z){
+					for($x = 0; $x < 16; ++$x){
+						$index = ($x << 11) + ($z << 7) + $offset;
+						$halfIndex = ($x << 10) + ($z << 6) + ($offset >> 1);
+						if(($y & 1) === 0){
+							$data = ord($chunkblockData[$halfIndex]) & 0x0F;
+							$bLight = ord($chunkblockLight[$halfIndex]) & 0x0F;
 
+							//$sLight = ord($blockSkyLight[$halfIndex]) & 0x0F;
+						}else{
+							$data = ord($chunkblockData[$halfIndex]) >> 4;
+							$bLight = ord($chunkblockLight[$halfIndex]) >> 4;
+							//$sLight = ord($blockSkyLight[$halfIndex]) >> 4;
+						}
+						$ids[$Y] .= pack("v", (ord($chunkblockIds[$index]) << 4) | $data);
 
-
-
-
-
-
-
-
-			/*$chunkdata = "";
-			$chunkblockData = $subChunk->getBlockIdArray();
-
-			/*				Bits Per Block		 Palette Length*/
-			$payload .= Binary::writeByte(12).Binary::writeVarInt(0);
-
-			/*$chunkblockIds = $chunk->getBlockIdArray();
-			$chunkblockData = $subChunk->getBlockDataArray();
-			$shift = false;
-			$dataoffset = 0;
-			for($i = 0; $i < 4096; $i++){
-				$chunkdata .= $chunkblockIds{$i};
-				if($shift){
-					//$chunkdata .= $chunkblockData{$dataoffset} >> 4;
-					$test = $chunkblockData{$dataoffset} >> 4;
-					/*echo base_convert($chunkblockData{$dataoffset}, 10, 2)."\n";
-					echo base_convert($test, 10, 2)."\n";*//*
-					$chunkdata .= $test;
-
-					$shift = false;
-					$dataoffset++;
-				}else{
-					$chunkdata .= $chunkblockData{$dataoffset} << 4;
-					$shift = true;
+						$blockLight[$Y][] = $bLight;
+						//$skyLight[$Y][] = $sLight;
+					}
 				}
-				//echo "chunkblockData: ".$dataoffset."\n";
-				//$p
-			}
-
-			$payload .= Binary::writeVarInt(strlen($chunkdata) / 8);
-
-			echo "chunkData: ".strlen($chunkdata)."\n";
-
-			$payload .= $chunkdata;*/
-
-			$payload .= Binary::writeVarInt(512);
-
-			$payload .= str_repeat("\x01", 4092);
-			
-
-			$payload .= $subChunk->getBlockLightArray();
-
-			if($this->player->bigBrother_getDimension() === 0){
-				$payload .= $subChunk->getSkyLightArray();
 			}
 		}
+
+		foreach($blockLight as $Y => $data){
+			$final = "";
+			$len = count($data);
+			for($i = 0; $i < $len; $i += 2){
+				$final .= chr(($data[$i + 1] << 4) | $data[$i]);
+			}
+			$blockLight[$Y] = $final;
+		}
+
+		/*
+		foreach($skyLight as $Y => $data){
+			$final = "";
+			$len = count($data);
+			for($i = 0; $i < $len; $i += 2){
+				$final .= chr(($data[$i + 1] << 4) | $data[$i]);
+			}
+			$skyLight[$Y] = $final;
+		}
+		*/
+
+		$skyLight = [$half = str_repeat("\xff", 4096), $half, $half, $half, $half, $half, $half, $half];
+
+		$payload = implode($ids) . implode($blockLight) . implode($skyLight) . $chunkbiomeIds;
 
 		return $payload;
 	}
 
-	public function isGroundUp(){
-		return $this->groundup;
-	}
-
-	public function getBitMapData(){
-		return $this->bitmap;
-	}
-
-	public function getBiomesData(){
-		return $this->biomes;
-	}
-
-	public function getChunkData(){
+	public function getData(){
 		if(isset($this->data)){
 			return $this->data;
 		}

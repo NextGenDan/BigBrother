@@ -25,7 +25,7 @@ class HeldItemChangePacket extends Packet{
 	public $selectedSlot;
 
 	public function pid(){
-		return 0x37;
+		return 0x09;
 	}
 
 	public function encode(){

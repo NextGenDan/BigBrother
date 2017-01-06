@@ -25,7 +25,7 @@ class TimeUpdatePacket extends Packet{
 	public $time;
 
 	public function pid(){
-		return 0x44;
+		return 0x03;
 	}
 
 	public function encode(){

@@ -27,30 +27,28 @@ use shoghicp\BigBrother\network\Packet;
 use shoghicp\BigBrother\network\protocol\Login\EncryptionResponsePacket;
 use shoghicp\BigBrother\network\protocol\Login\LoginStartPacket;
 
-use shoghicp\BigBrother\network\protocol\Play\TeleportConfirmPacket;
+use shoghicp\BigBrother\network\protocol\Play\KeepAlivePacket;
 
-
-
-//use shoghicp\BigBrother\network\protocol\Play\AnimatePacket;
+/*use shoghicp\BigBrother\network\protocol\Play\AnimatePacket;
 use shoghicp\BigBrother\network\protocol\Play\ClientSettingsPacket;
 use shoghicp\BigBrother\network\protocol\Play\ClientStatusPacket;
-//use shoghicp\BigBrother\network\protocol\Play\CreativeInventoryActionPacket;
-use shoghicp\BigBrother\network\protocol\Play\Client\PlayerAbilitiesPacket;
-use shoghicp\BigBrother\network\protocol\Play\Client\ChatPacket;
-//use shoghicp\BigBrother\network\protocol\Play\CTSCloseWindowPacket;
-//use shoghicp\BigBrother\network\protocol\Play\HeldItemChangePacket;
-use shoghicp\BigBrother\network\protocol\Play\Client\KeepAlivePacket;
-//use shoghicp\BigBrother\network\protocol\Play\PlayerArmSwingPacket;
-//use shoghicp\BigBrother\network\protocol\Play\PlayerBlockPlacementPacket;
-//use shoghicp\BigBrother\network\protocol\Play\PlayerDiggingPacket;
+use shoghicp\BigBrother\network\protocol\Play\CreativeInventoryActionPacket;
+use shoghicp\BigBrother\network\protocol\Play\CPlayerAbilitiesPacket;*/
+use shoghicp\BigBrother\network\protocol\Play\Client\ChatPacket as CTSChatPacket;
+/*use shoghicp\BigBrother\network\protocol\Play\CTSCloseWindowPacket;
+use shoghicp\BigBrother\network\protocol\Play\HeldItemChangePacket;
+use shoghicp\BigBrother\network\protocol\Play\KeepAlivePacket;
+use shoghicp\BigBrother\network\protocol\Play\PlayerArmSwingPacket;
+use shoghicp\BigBrother\network\protocol\Play\PlayerBlockPlacementPacket;
+use shoghicp\BigBrother\network\protocol\Play\PlayerDiggingPacket;
 use shoghicp\BigBrother\network\protocol\Play\PlayerLookPacket;
-//use shoghicp\BigBrother\network\protocol\Play\PlayerPacket;
-use shoghicp\BigBrother\network\protocol\Play\Client\PlayerPositionAndLookPacket;
+use shoghicp\BigBrother\network\protocol\Play\PlayerPacket;
+use shoghicp\BigBrother\network\protocol\Play\PlayerPositionAndLookPacket;
 use shoghicp\BigBrother\network\protocol\Play\PlayerPositionPacket;
-//use shoghicp\BigBrother\network\protocol\Play\PluginMessagePacket;
-//use shoghicp\BigBrother\network\protocol\Play\ResourcePackStatusPacket;
-//use shoghicp\BigBrother\network\protocol\Play\CTabCompletePacket;
-//use shoghicp\BigBrother\network\protocol\Play\UseEntityPacket;
+use shoghicp\BigBrother\network\protocol\Play\PluginMessagePacket;
+use shoghicp\BigBrother\network\protocol\Play\ResourcePackStatusPacket;
+use shoghicp\BigBrother\network\protocol\Play\CTabCompletePacket;
+use shoghicp\BigBrother\network\protocol\Play\UseEntityPacket;*/
 use shoghicp\BigBrother\network\translation\Translator;
 use shoghicp\BigBrother\utils\Binary;
 
@@ -124,6 +122,7 @@ class ProtocolInterface implements SourceInterface{
 
 	protected function sendPacket($target, Packet $packet){
 		echo "[Send:Interface] 0x".bin2hex(chr($packet->pid()))."\n";
+		echo get_class($packet)."\n";
 		$data = chr(ServerManager::PACKET_SEND_PACKET) . Binary::writeInt($target) . $packet->write();
 		$this->thread->pushMainToThreadPacket($data);
 	}
@@ -186,7 +185,7 @@ class ProtocolInterface implements SourceInterface{
 	}
 
 	protected function handlePacket(DesktopPlayer $player, $payload){
-		//echo "[Receive:Interface] 0x".bin2hex(chr($payload{0}))."\n";
+		echo "[Receive:Interface] 0x".bin2hex(chr($payload))."\n";
 		$pid = ord($payload{0});
 		$offset = 1;
 
@@ -195,43 +194,11 @@ class ProtocolInterface implements SourceInterface{
 		if($status === 1){
 			switch($pid){
 				case 0x00:
-					$pk = new TeleportConfirmPacket();
-					break;
-
-				case 0x02:
-					$pk = new ChatPacket();
-					break;
-				case 0x03:
-					$pk = new ClientStatusPacket();
-					break;
-				case 0x04:
-					$pk = new ClientSettingsPacket();
-					break;
-
-				case 0x09:
-					$pk = new PluginMessagePacket();
-					break;
-
-				case 0x0b:
 					$pk = new KeepAlivePacket();
 					break;
-				case 0x0c:
-					$pk = new PlayerPositionPacket();
+				/*case 0x01:
+					$pk = new CTSChatPacket();
 					break;
-				case 0x0d:
-					$pk = new PlayerPositionAndLookPacket();
-					break;
-				case 0x0e:
-					$pk = new PlayerLookPacket();
-					break;
-
-				case 0x12:
-					$pk = new PlayerAbilitiesPacket();
-					break;
-
-
-				
-				/*
 				case 0x02:
 					$pk = new UseEntityPacket();
 					break;
@@ -239,13 +206,14 @@ class ProtocolInterface implements SourceInterface{
 					$pk = new PlayerPacket();
 					break;
 				case 0x04:
-					
+					$pk = new PlayerPositionPacket();
 					break;
 				case 0x05:
-					
+					$pk = new PlayerLookPacket();
 					break;
 				case 0x06:
-					
+					$pk = new PlayerPositionAndLookPacket();
+					break;
 				case 0x07:
 					$pk = new PlayerDiggingPacket();
 					break;
@@ -272,16 +240,33 @@ class ProtocolInterface implements SourceInterface{
 				case 0x10:
 					$pk = new CreativeInventoryActionPacket();
 				break;
-				
+				case 0x11:
+
+					break;
+				case 0x12:
+					$pk = new CPlayerAbilitiesPacket();
+					break;
+
 				case 0x14:
 					$pk = new CTabCompletePacket();
 					break;
-				
+				case 0x15:
+					$pk = new ClientSettingsPacket();
+					break;
+				case 0x16:
+					$pk = new ClientStatusPacket();
+					break;
+				case 0x17:
+					$pk = new PluginMessagePacket();
+					break;
+				case 0x18:
+					
+					break;
 				case 0x19:
 					$pk = new ResourcePackStatusPacket();
 					break;*/
 				default:
-					echo "[Interface][Receive] 0x".bin2hex(chr($pid))."\n"; //Debug
+					echo "[Receive] 0x".bin2hex(chr($pid))."\n"; //Debug
 					return;
 			}
 

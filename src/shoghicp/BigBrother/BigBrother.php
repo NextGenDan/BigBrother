@@ -24,10 +24,10 @@ use pocketmine\network\protocol\Info;
 use pocketmine\network\protocol\PlayerActionPacket;
 use shoghicp\BigBrother\network\Info as MCInfo;
 use shoghicp\BigBrother\network\ProtocolInterface;
-use shoghicp\BigBrother\network\translation\Translator;
 use shoghicp\BigBrother\network\translation\Translator_100;
 use shoghicp\BigBrother\network\protocol\Play\RespawnPacket;
 use shoghicp\BigBrother\network\protocol\Play\ResourcePackSendPacket;
+
 use pocketmine\utils\TextFormat;
 use pocketmine\block\Block;
 use pocketmine\math\Vector3;
@@ -177,4 +177,5 @@ class BigBrother extends PluginBase implements Listener{
 		}
 		return $result;
 	}
+
 }

@@ -30,13 +30,13 @@ class JoinGamePacket extends Packet{
 	public $reducedDebugInfo = false;
 
 	public function pid(){
-		return 0x23;
+		return 0x01;
 	}
 
 	public function encode(){
 		$this->putInt($this->eid);
 		$this->putByte($this->gamemode);
-		$this->putInt($this->dimension);
+		$this->putByte($this->dimension);
 		$this->putByte($this->difficulty);
 		$this->putByte($this->maxPlayers);
 		$this->putString($this->levelType);

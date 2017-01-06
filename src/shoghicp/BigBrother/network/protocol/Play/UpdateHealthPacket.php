@@ -26,7 +26,7 @@ class UpdateHealthPacket extends Packet{
 	public $saturation;
 
 	public function pid(){
-		return 0x3e;
+		return 0x06;
 	}
 
 	public function encode(){

@@ -15,23 +15,25 @@
  * GNU General Public License for more details.
 */
 
-namespace shoghicp\BigBrother\network\protocol\Play;
+namespace shoghicp\BigBrother\network\protocol\Play\Server;
 
 use shoghicp\BigBrother\network\Packet;
 
-class TeleportConfirmPacket extends Packet{
+class ChatPacket extends Packet{
 
-	public $teleportId;
+	public $message;
+	public $position = 0; //0 = chat, 1 = system message, 2 = action bar
 
 	public function pid(){
-		return 0x00;
+		return 0x02;
 	}
 
 	public function encode(){
-		
+		$this->putString($this->message);
+		$this->putByte($this->position);
 	}
 
 	public function decode(){
-		$this->teleportId = $this->getVarInt();
+		
 	}
 }

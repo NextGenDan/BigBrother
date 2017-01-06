@@ -26,7 +26,7 @@ class EntityMetadataPacket extends Packet{
 	public $metadata;
 
 	public function pid(){
-		return 0x39;
+		return 0x1c;
 	}
 
 	public function encode(){

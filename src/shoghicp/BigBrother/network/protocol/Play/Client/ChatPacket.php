@@ -24,7 +24,7 @@ class ChatPacket extends Packet{
 	public $message;
 
 	public function pid(){
-		return 0x02;
+		return 0x01;
 	}
 
 	public function encode(){
