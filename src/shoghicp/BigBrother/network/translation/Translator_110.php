@@ -1765,7 +1765,7 @@ class Translator_110 implements Translator{
 				while($stream->offset < $len){
 					$buf = $stream->getString();
 					if(($pk = $player->getServer()->getNetwork()->getPacket(ord($buf{0}))) !== null){
-						if($pk::NETWORK_ID === Info::BATCH_PACKET){
+						if($pk::NETWORK_ID === 0xfe){
 							throw new \InvalidStateException("Invalid BatchPacket inside BatchPacket");
 						}
 
