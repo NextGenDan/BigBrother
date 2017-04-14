@@ -1750,7 +1750,7 @@ class Translator_110 implements Translator{
 
 				return null;
 
-			case Info::0xfe:
+			case 0xfe:
 				$packets = [];
 
 				$str = zlib_decode($packet->payload, 1024 * 1024 * 64); //Max 64MB
